@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal de Arbitraje P2P | Pro Guide</title>
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --bg-card: #151b2b;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-ves: #f59e0b;
+            --accent-wally: #3b82f6;
+            --accent-zinli: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #1e293b;
+            --btn-action: #2563eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .dashboard { max-width: 1200px; margin: 0 auto; }
+
+        header { text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; }
+
+        .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; justify-content: center; flex-wrap: wrap;}
+        .tab-btn {
+            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .tab-btn:hover { color: var(--text-main); border-color: #475569; }
+        .tab-btn.active-ves { border-bottom: 3px solid var(--accent-ves); color: var(--text-main); background: #1a2235; }
+        .tab-btn.active-wally { border-bottom: 3px solid var(--accent-wally); color: var(--text-main); background: #1a2235; }
+        .tab-btn.active-zinli { border-bottom: 3px solid var(--accent-zinli); color: var(--text-main); background: #1a2235; }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card h2 { font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card.ves h2 { color: var(--accent-ves); }
+        .card.wally h2 { color: var(--accent-wally); }
+        .card.zinli h2 { color: var(--accent-zinli); }
+
+        .flow-step { display: flex; align-items: flex-start; margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--text-muted); border-radius: 0 8px 8px 0; }
+        .flow-step.ves { border-left-color: var(--accent-ves); }
+        .flow-step.wally { border-left-color: var(--accent-wally); }
+        .flow-step.zinli { border-left-color: var(--accent-zinli); }
+        .step-number { font-weight: bold; margin-right: 1rem; font-size: 1.2rem; min-width: 24px; text-align: center; }
+        
+        .calculator { background: #0f1423; padding: 1.5rem; border-radius: 8px; border: 1px dashed var(--border); }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .input-group input { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: var(--text-main); font-size: 1rem; }
+        .input-group input:focus { outline: none; border-color: var(--success); }
+        
+        .result-box { margin-top: 1.5rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 6px; text-align: center; transition: all 0.3s ease; }
+        .result-box.negative { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
+        .result-box h3 { color: var(--success); font-size: 1.5rem; margin: 0.5rem 0; }
+        .result-box.negative h3 { color: var(--danger); }
+
+        /* Botones de acción */
+        .btn-record { width: 100%; padding: 1rem; margin-top: 1rem; background-color: var(--btn-action); color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-record:hover { background-color: #1d4ed8; }
+        .btn-export { background-color: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; float: right;}
+        .btn-export:hover { background-color: #059669; }
+        .btn-danger { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;}
+        .btn-danger:hover { background-color: rgba(239, 68, 68, 0.1); }
+
+        /* Estilos de la Bitácora */
+        .journal-section { margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--border); }
+        .table-responsive { overflow-x: auto; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; background: var(--bg-card); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--border); }
+        th { background: #1a2235; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px;}
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .profit-pos { color: var(--success); font-weight: bold; }
+        .profit-neg { color: var(--danger); font-weight: bold; }
+
+        ul.custom-list { list-style: none; }
+        ul.custom-list li::before { content: '⚡'; margin-right: 8px; }
+
+        /* Toggle Inter-Exchange */
+        .toggle-group { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--accent-ves); }
+        .toggle-group input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .hidden-input { display: none; animation: fadeIn 0.3s ease; }
+        .hidden-input.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header>
+        <h1>Terminal P2P Maker & Bitácora</h1>
+        <p class="subtitle">Gestión de Liquidez y Registro de Ciclos | Binance • Bybit • Bitget • BingX</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active-ves" onclick="openTab('ves', this, 'active-ves')">🇻🇪 USDT / VES</button>
+        <button class="tab-btn" onclick="openTab('wally', this, 'active-wally')">💳 USDT / WALLY</button>
+        <button class="tab-btn" onclick="openTab('zinli', this, 'active-zinli')">🎯 USDT / ZINLI</button>
+    </div>
+
+    <div id="ves" class="tab-content active">
+        <div class="grid-2">
+            <div>
+                <div class="card ves">
+                    <h2>Ciclo de Acumulación (VES)</h2>
+                    <div class="flow-step ves">
+                        <span class="step-number">1</span>
+                        <div><strong>VENDER CARO (Tu Anuncio):</strong> Publicas oferta de VENTA. Liberas USDT y captas liquidez en Bolívares (Bs) a una tasa premium.</div>
+                    </div>
+                    <div class="flow-step ves">
+                        <span class="step-number">2</span>
+                        <div><strong>RECOMPRAR BARATO (Tu Anuncio):</strong> Con el Fiat obtenido, publicas oferta de COMPRA de USDT a una tasa menor.</div>
+                    </div>
+                    <div class="flow-step ves">
+                        <span class="step-number">3</span>
+                        <div><strong>PROFIT EN USDT:</strong> Al cerrar el ciclo, recuperas tu capital inicial en USDT y retienes el excedente (spread neto).</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Estrategias Maker</h2>
+                    <ul class="custom-list">
+                        <li style="margin-bottom: 8px;">Controla tu "Bank Roll": no te quedes atascado con Bs en bancos de difícil movilización.</li>
+                        <li style="margin-bottom: 8px;">Calcula bien la comisión de la plataforma (0.1% a 0.2% por lado según tu nivel VIP).</li>
+                        <li>Ajusta precios dinámicamente: la agilidad para modificar tus anuncios define tu rentabilidad.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <div class="card ves">
+                    <h2>Calculadora Maker VES</h2>
+                    <div class="calculator">
+                        <div class="input-group">
+                            <label>Capital Operativo (USDT)</label>
+                            <input type="number" id="ves-usdt" value="500" oninput="calcVES()">
+                        </div>
+                        <div class="input-group">
+                            <label>Tasa VENTA Maker (Bs/USDT)</label>
+                            <input type="number" step="0.01" id="ves-sell" value="56.50" oninput="calcVES()">
+                        </div>
+                        <div class="input-group">
+                            <label>Tasa COMPRA Maker (Bs/USDT)</label>
+                            <input type="number" step="0.01" id="ves-buy" value="55.80" oninput="calcVES()">
+                        </div>
+                        <div class="input-group">
+                            <label>Fees de Plataforma Maker (USDT)</label>
+                            <input type="number" step="0.01" id="ves-fee" value="1.00" oninput="calcVES()">
+                        </div>
+
+                        <div class="toggle-group">
+                            <input type="checkbox" id="ves-inter-check" onchange="toggleInterExchange('ves-inter-fee-group', this.checked); calcVES();">
+                            <label for="ves-inter-check" style="margin:0; font-weight:bold; color:var(--text-main); font-size: 0.9rem;">+ Costo Extra (Retiros de Red / Inter-Exchange)</label>
+                        </div>
+                        <div class="input-group hidden-input" id="ves-inter-fee-group">
+                            <label style="color:#fcd34d;">Costo de Transferencia (USDT)</label>
+                            <input type="number" step="0.01" id="ves-net-fee" value="1.00" oninput="calcVES()">
+                        </div>
+
+                        <div id="ves-result" class="result-box">
+                            <p>Profit Neto del Ciclo:</p>
+                            <h3 id="ves-profit">+0.00 USDT</h3>
+                            <p id="ves-roi" style="font-size: 0.9rem; color: var(--text-muted)">ROI: +0.00%</p>
+                        </div>
+
+                        <button class="btn-record" onclick="recordTrade('USDT/VES', 'ves-usdt', 'ves-sell', 'ves-buy', 'ves-profit', 'ves-roi')">
+                            Guardar Ciclo en Bitácora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="wally" class="tab-content">
+        <div class="grid-2">
+            <div>
+                <div class="card wally">
+                    <h2>Ciclo de Acumulación (WALLY)</h2>
+                    <div class="flow-step wally">
+                        <span class="step-number">1</span>
+                        <div><strong>VENDER CARO:</strong> Entregas USDT a cambio de saldo Wally a un precio premium.</div>
+                    </div>
+                    <div class="flow-step wally">
+                        <span class="step-number">2</span>
+                        <div><strong>RECOMPRAR BARATO:</strong> Usas ese saldo Wally para adquirir nuevamente USDT a un costo menor.</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card wally">
+                    <h2>Calculadora Maker Wally</h2>
+                    <div class="calculator">
+                        <div class="input-group"><label>Capital Operativo (USDT)</label><input type="number" id="wal-usdt" value="500" oninput="calcWally()"></div>
+                        <div class="input-group"><label>Precio VENTA ($/USDT)</label><input type="number" step="0.001" id="wal-sell" value="1.010" oninput="calcWally()"></div>
+                        <div class="input-group"><label>Precio COMPRA ($/USDT)</label><input type="number" step="0.001" id="wal-buy" value="0.980" oninput="calcWally()"></div>
+                        <div class="input-group"><label>Comisiones (USDT)</label><input type="number" step="0.01" id="wal-fee" value="0.00" oninput="calcWally()"></div>
+                        
+                        <div id="wal-result" class="result-box">
+                            <h3 id="wal-profit">+0.00 USDT</h3>
+                            <p id="wal-roi" style="font-size: 0.9rem; color: var(--text-muted)">ROI: +0.00%</p>
+                        </div>
+                        <button class="btn-record" onclick="recordTrade('USDT/WALLY', 'wal-usdt', 'wal-sell', 'wal-buy', 'wal-profit', 'wal-roi')">Guardar Ciclo en Bitácora</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="zinli" class="tab-content">
+        <div class="grid-2">
+            <div>
+                <div class="card zinli">
+                    <h2>Ciclo de Acumulación (ZINLI)</h2>
+                    <div class="flow-step zinli">
+                        <span class="step-number">1</span>
+                        <div><strong>VENDER CARO:</strong> Entregas USDT a cambio de saldo Zinli a un precio premium.</div>
+                    </div>
+                    <div class="flow-step zinli">
+                        <span class="step-number">2</span>
+                        <div><strong>RECOMPRAR BARATO:</strong> Reviertes el ciclo comprando USDT más económico con tu saldo Zinli.</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="card zinli">
+                    <h2>Calculadora Maker Zinli</h2>
+                    <div class="calculator">
+                        <div class="input-group"><label>Capital Operativo (USDT)</label><input type="number" id="zin-usdt" value="500" oninput="calcZinli()"></div>
+                        <div class="input-group"><label>Precio VENTA ($/USDT)</label><input type="number" step="0.001" id="zin-sell" value="1.020" oninput="calcZinli()"></div>
+                        <div class="input-group"><label>Precio COMPRA ($/USDT)</label><input type="number" step="0.001" id="zin-buy" value="0.990" oninput="calcZinli()"></div>
+                        <div class="input-group"><label>Costos/Comisiones (USDT)</label><input type="number" step="0.01" id="zin-fee" value="0.99" oninput="calcZinli()"></div>
+                        
+                        <div id="zin-result" class="result-box">
+                            <h3 id="zin-profit">+0.00 USDT</h3>
+                            <p id="zin-roi" style="font-size: 0.9rem; color: var(--text-muted)">ROI: +0.00%</p>
+                        </div>
+                        <button class="btn-record" onclick="recordTrade('USDT/ZINLI', 'zin-usdt', 'zin-sell', 'zin-buy', 'zin-profit', 'zin-roi')">Guardar Ciclo en Bitácora</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="journal-section">
+        <button class="btn-export" onclick="exportToCSV()">Descargar CSV</button>
+        <h2>📖 Bitácora de Ciclos P2P</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Tus operaciones se guardan localmente. Exporta a CSV para cruzar los datos con tu hoja de cálculo principal.</p>
+        
+        <div class="table-responsive">
+            <table id="journal-table">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Mercado</th>
+                        <th>Capital Base</th>
+                        <th>Tasa Venta</th>
+                        <th>Tasa Compra</th>
+                        <th>Profit Neto</th>
+                        <th>ROI</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="journal-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Navegación
+    function openTab(tabId, btnElement, activeClass) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn');
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('tab-btn', activeClass);
+    }
+
+    // Toggle Inter-Exchange
+    function toggleInterExchange(elementId, isChecked) {
+        const el = document.getElementById(elementId);
+        if(isChecked) el.classList.add('show');
+        else el.classList.remove('show');
+    }
+
+    // Lógica de Renderizado de Resultados
+    function updateResult(boxId, profitId, roiId, profit, invAmount) {
+        const box = document.getElementById(boxId);
+        const elProfit = document.getElementById(profitId);
+        const elRoi = document.getElementById(roiId);
+        
+        if (!invAmount || invAmount <= 0) {
+            elProfit.textContent = `0.00 USDT`; elRoi.textContent = `ROI: 0.00%`;
+            box.classList.remove('negative');
+            return;
+        }
+
+        const roi = (profit / invAmount) * 100;
+        const prefix = profit > 0 ? '+' : '';
+        
+        elProfit.textContent = `${prefix}${profit.toFixed(2)} USDT`;
+        elRoi.textContent = `ROI: ${prefix}${roi.toFixed(2)}%`;
+        
+        if (profit < 0) box.classList.add('negative');
+        else box.classList.remove('negative');
+    }
+
+    // Cálculos
+    function calcVES() {
+        const usdt = parseFloat(document.getElementById('ves-usdt').value) || 0;
+        const sell = parseFloat(document.getElementById('ves-sell').value) || 0;
+        const buy = parseFloat(document.getElementById('ves-buy').value) || 0;
+        const platformFee = parseFloat(document.getElementById('ves-fee').value) || 0;
+        
+        const isInterExchange = document.getElementById('ves-inter-check').checked;
+        const netFee = isInterExchange ? (parseFloat(document.getElementById('ves-net-fee').value) || 0) : 0;
+        
+        const totalFees = platformFee + netFee;
+
+        if(buy === 0 || usdt === 0) return updateResult('ves-result', 'ves-profit', 'ves-roi', 0, usdt);
+        
+        const fiatObtenido = usdt * sell; 
+        const usdtRecomprados = fiatObtenido / buy;
+        const profit = usdtRecomprados - usdt - totalFees;
+        
+        updateResult('ves-result', 'ves-profit', 'ves-roi', profit, usdt);
+    }
+
+    function calcWally() { 
+        const u=parseFloat(document.getElementById('wal-usdt').value)||0, s=parseFloat(document.getElementById('wal-sell').value)||0, b=parseFloat(document.getElementById('wal-buy').value)||0, f=parseFloat(document.getElementById('wal-fee').value)||0;
+        if(b===0)return; updateResult('wal-result', 'wal-profit', 'wal-roi', ((u*s)/b)-u-f, u);
+    }
+    
+    function calcZinli() {
+        const u=parseFloat(document.getElementById('zin-usdt').value)||0, s=parseFloat(document.getElementById('zin-sell').value)||0, b=parseFloat(document.getElementById('zin-buy').value)||0, f=parseFloat(document.getElementById('zin-fee').value)||0;
+        if(b===0)return; updateResult('zin-result', 'zin-profit', 'zin-roi', ((u*s)/b)-u-f, u);
+    }
+
+    // Inicializar
+    calcVES(); calcWally(); calcZinli();
+
+    // ==========================================
+    // LÓGICA DE BITÁCORA Y ALMACENAMIENTO (localStorage)
+    // ==========================================
+    
+    let tradeHistory = JSON.parse(localStorage.getItem('p2p_journal')) || [];
+
+    function recordTrade(market, usdtId, sellId, buyId, profitId, roiId) {
+        const capital = document.getElementById(usdtId).value;
+        const sellRate = document.getElementById(sellId).value;
+        const buyRate = document.getElementById(buyId).value;
+        const profitRaw = document.getElementById(profitId).textContent;
+        const roiRaw = document.getElementById(roiId).textContent;
+
+        const newTrade = {
+            id: Date.now(),
+            date: new Date().toLocaleString('es-ES'),
+            market: market,
+            capital: `${capital} USDT`,
+            sell: sellRate,
+            buy: buyRate,
+            profit: profitRaw,
+            roi: roiRaw.replace('ROI: ', '')
+        };
+
+        tradeHistory.unshift(newTrade); 
+        localStorage.setItem('p2p_journal', JSON.stringify(tradeHistory));
+        renderJournal();
+        
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "¡Registrado!";
+        btn.style.backgroundColor = "var(--success)";
+        setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = "var(--btn-action)"; }, 1500);
+    }
+
+    function deleteTrade(id) {
+        tradeHistory = tradeHistory.filter(trade => trade.id !== id);
+        localStorage.setItem('p2p_journal', JSON.stringify(tradeHistory));
+        renderJournal();
+    }
+
+    function renderJournal() {
+        const tbody = document.getElementById('journal-body');
+        tbody.innerHTML = '';
+        
+        if (tradeHistory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No hay operaciones registradas aún.</td></tr>';
+            return;
+        }
+
+        tradeHistory.forEach(trade => {
+            const isPositive = trade.profit.includes('+');
+            const profitClass = isPositive ? 'profit-pos' : 'profit-neg';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${trade.date}</td>
+                <td><strong>${trade.market}</strong></td>
+                <td>${trade.capital}</td>
+                <td>${trade.sell}</td>
+                <td>${trade.buy}</td>
+                <td class="${profitClass}">${trade.profit}</td>
+                <td class="${profitClass}">${trade.roi}</td>
+                <td><button class="btn-danger" onclick="deleteTrade(${trade.id})">Borrar</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function exportToCSV() {
+        if (tradeHistory.length === 0) {
+            alert("La bitácora está vacía. No hay datos para exportar.");
+            return;
+        }
+
+        const headers = ["Fecha", "Mercado", "Capital Base", "Tasa Venta", "Tasa Compra", "Profit USDT", "ROI"];
+        let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+        tradeHistory.forEach(t => {
+            const cleanProfit = t.profit.replace(' USDT', '').replace('+', '');
+            const cleanRoi = t.roi.replace('%', '').replace('+', '');
+            const cleanCapital = t.capital.replace(' USDT', '');
+            
+            const row = [t.date.replace(',', ''), t.market, cleanCapital, t.sell, t.buy, cleanProfit, cleanRoi];
+            csvContent += row.join(",") + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Bitacora_P2P_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    renderJournal();
+
+</script>
+</body>
+</html>
